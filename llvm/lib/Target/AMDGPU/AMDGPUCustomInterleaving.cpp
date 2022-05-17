@@ -26,9 +26,38 @@ public:
   void apply(ScheduleDAGInstrs *DAG) override;
 };
 
-void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
-  for (SUnit &SU : DAG->SUnits) {
+// Try recognize a GEMM hot loop.
+// The 0th SUnit would be an inline asm.
+// The last SUnit would be an S_CBRANCH_SCC1.
+bool identifyGEMMHotLoop(ScheduleDAGInstrs *DAG) {
+  bool gotBegin = false;
+  bool gotEnd = false;
+
+  const SUnit &SU = DAG->SUnits[0];
+  if (SU.isInstr()) {
+    const MachineInstr *MI = SU.getInstr();
+    if (MI->isInlineAsm()) {
+      gotBegin = true;
+    }
   }
+
+  if (gotBegin) {
+    if (DAG->ExitSU.getInstr() != nullptr) {
+      const MachineInstr *MI = DAG->ExitSU.getInstr();
+      if (MI->getOpcode() == AMDGPU::S_CBRANCH_SCC1) {
+        gotEnd = true;
+      }
+    }
+  }
+
+  return (gotBegin && gotEnd);
+}
+
+void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
+  if (!identifyGEMMHotLoop(DAG))
+    return;
+
+  llvm::errs() << "Inside a GEMM hot loop DAG.\n";
 }
 
 } // end namespace
