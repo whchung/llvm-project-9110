@@ -50,6 +50,7 @@ add_llvm_target(AMDGPUCodeGen
   AMDGPUAtomicOptimizer.cpp
   AMDGPUCallLowering.cpp
   AMDGPUCodeGenPrepare.cpp
+  AMDGPUCustomInterleaving.cpp
   AMDGPUDSReadClustering.cpp
   AMDGPUExportClustering.cpp
   AMDGPUFixFunctionBitcasts.cpp
