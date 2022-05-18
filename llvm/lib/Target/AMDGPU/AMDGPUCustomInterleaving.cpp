@@ -58,6 +58,24 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
     return;
 
   llvm::errs() << "Inside a GEMM hot loop DAG.\n";
+
+  //llvm::errs() << "Before adding cluster edges.\n";
+  //for (SUnit &SU : DAG->SUnits) {
+  //  DAG->dumpNodeAll(SU);
+  //  llvm::errs() << "==========\n";
+  //}
+
+  //llvm::errs() << "Add some cluster edges.\n";
+  //DAG->addEdge(&DAG->SUnits[5], SDep(&DAG->SUnits[3], SDep::Cluster));
+  //DAG->addEdge(&DAG->SUnits[5], SDep(&DAG->SUnits[3], SDep::Artificial));
+  //DAG->addEdge(&DAG->SUnits[6], SDep(&DAG->SUnits[3], SDep::Cluster));
+  //DAG->addEdge(&DAG->SUnits[6], SDep(&DAG->SUnits[3], SDep::Artificial));
+
+  //llvm::errs() << "After adding cluster edges.\n";
+  //for (SUnit &SU : DAG->SUnits) {
+  //  DAG->dumpNodeAll(SU);
+  //  llvm::errs() << "==========\n";
+  //}
 }
 
 } // end namespace
