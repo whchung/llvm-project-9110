@@ -59,23 +59,52 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
 
   llvm::errs() << "Inside a GEMM hot loop DAG.\n";
 
-  //llvm::errs() << "Before adding cluster edges.\n";
-  //for (SUnit &SU : DAG->SUnits) {
-  //  DAG->dumpNodeAll(SU);
-  //  llvm::errs() << "==========\n";
-  //}
+  llvm::errs() << "Before adding cluster edges.\n";
+  for (SUnit &SU : DAG->SUnits) {
+    DAG->dumpNodeAll(SU);
+    llvm::errs() << "==========\n";
+  }
 
-  //llvm::errs() << "Add some cluster edges.\n";
-  //DAG->addEdge(&DAG->SUnits[5], SDep(&DAG->SUnits[3], SDep::Cluster));
-  //DAG->addEdge(&DAG->SUnits[5], SDep(&DAG->SUnits[3], SDep::Artificial));
-  //DAG->addEdge(&DAG->SUnits[6], SDep(&DAG->SUnits[3], SDep::Cluster));
-  //DAG->addEdge(&DAG->SUnits[6], SDep(&DAG->SUnits[3], SDep::Artificial));
+  llvm::errs() << "Add some cluster edges.\n";
 
-  //llvm::errs() << "After adding cluster edges.\n";
-  //for (SUnit &SU : DAG->SUnits) {
-  //  DAG->dumpNodeAll(SU);
-  //  llvm::errs() << "==========\n";
-  //}
+  // interleave MFMA with ds_loads.
+  DAG->addEdge(&DAG->SUnits[28], SDep(&DAG->SUnits[26], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[29], SDep(&DAG->SUnits[35], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[30], SDep(&DAG->SUnits[36], SDep::Artificial));
+
+  // interleave MFMA with ds_writes.
+  DAG->addEdge(&DAG->SUnits[31], SDep(&DAG->SUnits[46], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[32], SDep(&DAG->SUnits[47], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[33], SDep(&DAG->SUnits[48], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[34], SDep(&DAG->SUnits[49], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[37], SDep(&DAG->SUnits[51], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[38], SDep(&DAG->SUnits[53], SDep::Artificial));
+
+  // interleave MFMA with buffer_loads.
+  DAG->addEdge(&DAG->SUnits[39], SDep(&DAG->SUnits[55], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[40], SDep(&DAG->SUnits[57], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[41], SDep(&DAG->SUnits[58], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[42], SDep(&DAG->SUnits[59], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[43], SDep(&DAG->SUnits[61], SDep::Artificial));
+
+  DAG->addEdge(&DAG->SUnits[44], SDep(&DAG->SUnits[63], SDep::Artificial));
+
+  llvm::errs() << "After adding cluster edges.\n";
+  for (SUnit &SU : DAG->SUnits) {
+    DAG->dumpNodeAll(SU);
+    llvm::errs() << "==========\n";
+  }
 }
 
 } // end namespace
