@@ -640,5 +640,5 @@ void GCNScheduleDAGMILive::finalizeSchedule() {
 
     if (Stage == UnclusteredReschedule)
       SavedMutations.swap(Mutations);
-  } while (Stage != LastStage);
+  } while (ST.hasGFX90AInsts() ? false : (Stage != LastStage));
 }
