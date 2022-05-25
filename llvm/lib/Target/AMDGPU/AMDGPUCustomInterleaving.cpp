@@ -124,14 +124,15 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
     }
   }
 
+#if 0
   llvm::errs() << "DSRead instruction count: " << DSReadCount << "\n";
   llvm::errs() << "DSWrite instruction count: " << DSWriteCount << "\n";
   llvm::errs() << "VMEMLoad instruction count: " << VMEMLoadCount << "\n";
   llvm::errs() << "VMEMStore instruction count: " << VMEMStoreCount << "\n";
   llvm::errs() << "MFMA instruction count: " << MFMACount << "\n";
+#endif
 
   assert(VMEMStoreCount == 0);
-  assert(MFMACount > (VMEMLoadCount + DSWriteCount + DSReadCount));
 
 #if 0
   llvm::errs() << "Add some artificial edges.\n";
@@ -141,7 +142,7 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
 
   // Interleave MFMA with buffer_loads.
   int64_t VMEMLoadIter = VMEMLoads.size() - 1;
-  while (VMEMLoadIter >= 0) {
+  while ((VMEMLoadIter >= 0) && (MFMAIter >= 0)) {
     SUnit* VMEMLoadSU = VMEMLoads[VMEMLoadIter--];
     SUnit* MFMASU = MFMAs[MFMAIter--];
     DAG->addEdge(MFMASU, SDep(VMEMLoadSU, SDep::Artificial));
@@ -149,7 +150,7 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
 
   // Interleave MFMA with ds_writes.
   int64_t DSWriteIter = DSWrites.size() - 1;
-  while (DSWriteIter >= 0) {
+  while ((DSWriteIter >= 0) && (MFMAIter >= 0)) {
     SUnit* DSWriteSU = DSWrites[DSWriteIter--];
     SUnit* MFMASU = MFMAs[MFMAIter--];
     DAG->addEdge(MFMASU, SDep(DSWriteSU, SDep::Artificial));
@@ -157,7 +158,7 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
 
   // Interleave MFMA with ds_reads.
   int64_t DSReadIter = DSReads.size() - 1;
-  while (DSReadIter >= 0) {
+  while ((DSReadIter >= 0) && (MFMAIter >= 0)) {
     SUnit* DSReadSU = DSReads[DSReadIter--];
     SUnit* MFMASU = MFMAs[MFMAIter--];
     DAG->addEdge(MFMASU, SDep(DSReadSU, SDep::Artificial));
