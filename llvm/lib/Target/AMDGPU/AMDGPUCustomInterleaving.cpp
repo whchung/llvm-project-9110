@@ -53,58 +53,123 @@ bool identifyGEMMHotLoop(ScheduleDAGInstrs *DAG) {
   return (gotBegin && gotEnd);
 }
 
+static bool isDSRead(const SUnit &SU) {
+  MachineInstr *MI = SU.getInstr();
+  return (SIInstrInfo::isDS(*MI) && (MI->mayLoad()));
+}
+
+static bool isDSWrite(const SUnit &SU) {
+  MachineInstr *MI = SU.getInstr();
+  return (SIInstrInfo::isDS(*MI) && (MI->mayStore()));
+}
+
+static bool isMFMA(const SUnit &SU) {
+  return SIInstrInfo::isMAI(*SU.getInstr());
+}
+
+static bool isVMEMLoad(const SUnit &SU) {
+  MachineInstr *MI = SU.getInstr();
+  return (SIInstrInfo::isVMEM(*MI) && (MI->mayLoad()));
+}
+
+static bool isVMEMStore(const SUnit &SU) {
+  MachineInstr *MI = SU.getInstr();
+  return (SIInstrInfo::isVMEM(*MI) && (MI->mayStore()));
+}
+
 void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
   if (!identifyGEMMHotLoop(DAG))
     return;
 
+#if 0
   llvm::errs() << "Inside a GEMM hot loop DAG.\n";
+#endif
 
-  llvm::errs() << "Before adding cluster edges.\n";
+  int64_t DSReadCount = 0;
+  int64_t DSWriteCount = 0;
+  int64_t VMEMLoadCount = 0;
+  int64_t VMEMStoreCount = 0;
+  int64_t MFMACount = 0;
+
+  SmallVector<SUnit*, 8> DSReads;
+  SmallVector<SUnit*, 8> DSWrites;
+  SmallVector<SUnit*, 8> VMEMLoads;
+  SmallVector<SUnit*, 8> VMEMStores;
+  SmallVector<SUnit*, 32> MFMAs;
+
+#if 0
+  llvm::errs() << "Before adding artificial edges.\n";
+#endif
+  for (SUnit &SU : DAG->SUnits) {
+#if 0
+    DAG->dumpNodeAll(SU);
+    llvm::errs() << "==========\n";
+#endif
+
+    if (isDSRead(SU)) {
+      DSReadCount++;
+      DSReads.push_back(&SU);
+    } else if (isDSWrite(SU)) {
+      DSWriteCount++;
+      DSWrites.push_back(&SU);
+    } else if (isMFMA(SU)) {
+      MFMACount++;
+      MFMAs.push_back(&SU);
+    } else if (isVMEMLoad(SU)) {
+      VMEMLoadCount++;
+      VMEMLoads.push_back(&SU);
+    } else if (isVMEMStore(SU)) {
+      VMEMStoreCount++;
+      VMEMStores.push_back(&SU);
+    }
+  }
+
+  llvm::errs() << "DSRead instruction count: " << DSReadCount << "\n";
+  llvm::errs() << "DSWrite instruction count: " << DSWriteCount << "\n";
+  llvm::errs() << "VMEMLoad instruction count: " << VMEMLoadCount << "\n";
+  llvm::errs() << "VMEMStore instruction count: " << VMEMStoreCount << "\n";
+  llvm::errs() << "MFMA instruction count: " << MFMACount << "\n";
+
+  assert(VMEMStoreCount == 0);
+  assert(MFMACount > (VMEMLoadCount + DSWriteCount + DSReadCount));
+
+#if 0
+  llvm::errs() << "Add some artificial edges.\n";
+#endif
+
+  int64_t MFMAIter = MFMAs.size() - 1;
+
+  // Interleave MFMA with buffer_loads.
+  int64_t VMEMLoadIter = VMEMLoads.size() - 1;
+  while (VMEMLoadIter >= 0) {
+    SUnit* VMEMLoadSU = VMEMLoads[VMEMLoadIter--];
+    SUnit* MFMASU = MFMAs[MFMAIter--];
+    DAG->addEdge(MFMASU, SDep(VMEMLoadSU, SDep::Artificial));
+  }
+
+  // Interleave MFMA with ds_writes.
+  int64_t DSWriteIter = DSWrites.size() - 1;
+  while (DSWriteIter >= 0) {
+    SUnit* DSWriteSU = DSWrites[DSWriteIter--];
+    SUnit* MFMASU = MFMAs[MFMAIter--];
+    DAG->addEdge(MFMASU, SDep(DSWriteSU, SDep::Artificial));
+  }
+
+  // Interleave MFMA with ds_reads.
+  int64_t DSReadIter = DSReads.size() - 1;
+  while (DSReadIter >= 0) {
+    SUnit* DSReadSU = DSReads[DSReadIter--];
+    SUnit* MFMASU = MFMAs[MFMAIter--];
+    DAG->addEdge(MFMASU, SDep(DSReadSU, SDep::Artificial));
+  }
+
+#if 0
+  llvm::errs() << "After adding artificial edges.\n";
   for (SUnit &SU : DAG->SUnits) {
     DAG->dumpNodeAll(SU);
     llvm::errs() << "==========\n";
   }
-
-  llvm::errs() << "Add some cluster edges.\n";
-
-  // interleave MFMA with ds_loads.
-  DAG->addEdge(&DAG->SUnits[28], SDep(&DAG->SUnits[26], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[29], SDep(&DAG->SUnits[35], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[30], SDep(&DAG->SUnits[36], SDep::Artificial));
-
-  // interleave MFMA with ds_writes.
-  DAG->addEdge(&DAG->SUnits[31], SDep(&DAG->SUnits[46], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[32], SDep(&DAG->SUnits[47], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[33], SDep(&DAG->SUnits[48], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[34], SDep(&DAG->SUnits[49], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[37], SDep(&DAG->SUnits[51], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[38], SDep(&DAG->SUnits[53], SDep::Artificial));
-
-  // interleave MFMA with buffer_loads.
-  DAG->addEdge(&DAG->SUnits[39], SDep(&DAG->SUnits[55], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[40], SDep(&DAG->SUnits[57], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[41], SDep(&DAG->SUnits[58], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[42], SDep(&DAG->SUnits[59], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[43], SDep(&DAG->SUnits[61], SDep::Artificial));
-
-  DAG->addEdge(&DAG->SUnits[44], SDep(&DAG->SUnits[63], SDep::Artificial));
-
-  llvm::errs() << "After adding cluster edges.\n";
-  for (SUnit &SU : DAG->SUnits) {
-    DAG->dumpNodeAll(SU);
-    llvm::errs() << "==========\n";
-  }
+#endif
 }
 
 } // end namespace
