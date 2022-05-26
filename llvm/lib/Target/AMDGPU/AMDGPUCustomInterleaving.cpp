@@ -101,11 +101,11 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
   int64_t VMEMStoreCount = 0;
   int64_t MFMACount = 0;
 
-  SmallVector<SUnit*, 8> DSReads;
-  SmallVector<SUnit*, 8> DSWrites;
-  SmallVector<SUnit*, 8> VMEMLoads;
-  SmallVector<SUnit*, 8> VMEMStores;
-  SmallVector<SUnit*, 32> MFMAs;
+  SmallVector<SUnit *, 8> DSReads;
+  SmallVector<SUnit *, 8> DSWrites;
+  SmallVector<SUnit *, 8> VMEMLoads;
+  SmallVector<SUnit *, 8> VMEMStores;
+  SmallVector<SUnit *, 32> MFMAs;
 
 #if 0
   llvm::errs() << "Before adding artificial edges.\n";
@@ -181,30 +181,31 @@ void CustomInterleaving::apply(ScheduleDAGInstrs *DAG) {
   // Reset CurrentPriority.
   CurrentPriority = 0;
 
-  // Iterate through all different instruction groups to be interleaved with MFMA.
+  // Iterate through all different instruction groups to be interleaved with
+  // MFMA.
   while (CurrentPriority < TotalPriority) {
     if (CurrentPriority == VMEMLoadPriority) {
       // Interleave MFMA with buffer_loads.
       int64_t VMEMLoadIter = VMEMLoads.size() - 1;
       while ((VMEMLoadIter >= 0) && (MFMAIter >= 0)) {
-        SUnit* VMEMLoadSU = VMEMLoads[VMEMLoadIter--];
-        SUnit* MFMASU = MFMAs[MFMAIter--];
+        SUnit *VMEMLoadSU = VMEMLoads[VMEMLoadIter--];
+        SUnit *MFMASU = MFMAs[MFMAIter--];
         DAG->addEdge(MFMASU, SDep(VMEMLoadSU, SDep::Artificial));
       }
     } else if (CurrentPriority == DSWritePriority) {
       // Interleave MFMA with ds_writes.
       int64_t DSWriteIter = DSWrites.size() - 1;
       while ((DSWriteIter >= 0) && (MFMAIter >= 0)) {
-        SUnit* DSWriteSU = DSWrites[DSWriteIter--];
-        SUnit* MFMASU = MFMAs[MFMAIter--];
+        SUnit *DSWriteSU = DSWrites[DSWriteIter--];
+        SUnit *MFMASU = MFMAs[MFMAIter--];
         DAG->addEdge(MFMASU, SDep(DSWriteSU, SDep::Artificial));
       }
     } else if (CurrentPriority == DSReadPriority) {
       // Interleave MFMA with ds_reads.
       int64_t DSReadIter = DSReads.size() - 1;
       while ((DSReadIter >= 0) && (MFMAIter >= 0)) {
-        SUnit* DSReadSU = DSReads[DSReadIter--];
-        SUnit* MFMASU = MFMAs[MFMAIter--];
+        SUnit *DSReadSU = DSReads[DSReadIter--];
+        SUnit *MFMASU = MFMAs[MFMAIter--];
         DAG->addEdge(MFMASU, SDep(DSReadSU, SDep::Artificial));
       }
     }
