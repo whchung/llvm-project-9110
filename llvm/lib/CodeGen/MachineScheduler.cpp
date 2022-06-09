@@ -3148,12 +3148,12 @@ void GenericScheduler::tryCandidate(SchedCandidate &Cand,
                                                DAG->MF))
     return;
 
-  // Avoid increasing the max critical pressure in the scheduled region.
-  if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
-                                               Cand.RPDelta.CriticalMax,
-                                               TryCand, Cand, RegCritical, TRI,
-                                               DAG->MF))
-    return;
+  // // Avoid increasing the max critical pressure in the scheduled region.
+  // if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.CriticalMax,
+  //                                              Cand.RPDelta.CriticalMax,
+  //                                              TryCand, Cand, RegCritical, TRI,
+  //                                              DAG->MF))
+  //   return;
 
   // We only compare a subset of features when comparing nodes between
   // Top and Bottom boundary. Some properties are simply incomparable, in many
