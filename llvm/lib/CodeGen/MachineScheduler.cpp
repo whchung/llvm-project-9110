@@ -1599,7 +1599,7 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
           continue;
         LLVM_DEBUG(dbgs() << "  Copy Succ SU(" << Succ.getSUnit()->NodeNum
                           << ")\n");
-        DAG->addEdge(Succ.getSUnit(), SDep(SUb, SDep::Artificial));
+        // DAG->addEdge(Succ.getSUnit(), SDep(SUb, SDep::Artificial));
       }
     } else {
       // Copy predecessor edges from SUb to SUa to avoid the SUnits that
