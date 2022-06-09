@@ -157,8 +157,8 @@ multiclass SICommonWriteRes {
   def : HWWriteRes<Write2PassMAI,  [HWXDL], 2>;
   let ResourceCycles = [8] in
   def : HWWriteRes<Write8PassMAI,  [HWXDL], 8>;
-  let ResourceCycles = [16] in
-  def : HWWriteRes<Write16PassMAI, [HWXDL], 16>;
+  let ResourceCycles = [4] in
+  def : HWWriteRes<Write16PassMAI, [HWXDL], 4>;
 
   def : ReadAdvance<MIVGPRRead, -2>;
 
