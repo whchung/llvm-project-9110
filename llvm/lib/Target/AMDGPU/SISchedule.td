@@ -142,7 +142,7 @@ multiclass SICommonWriteRes {
   def : HWWriteRes<WriteLDS,     [HWLGKM],   5>; // Can be between 2 and 64
   def : HWWriteRes<WriteSALU,    [HWSALU],   1>;
   def : HWWriteRes<WriteSMEM,    [HWLGKM],   5>;
-  let ResourceCycles = [16] in
+  let ResourceCycles = [80] in
   def : HWWriteRes<WriteVMEM,    [HWVMEM],   80>;
   def : HWWriteRes<WriteBarrier, [HWBranch], 500>; // XXX: Guessed ???
 
