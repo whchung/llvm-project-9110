@@ -22,7 +22,6 @@ def WriteLDS    : SchedWrite;
 def WriteSALU   : SchedWrite;
 def WriteSMEM   : SchedWrite;
 def WriteVMEM   : SchedWrite;
-def ReadVMEM    : SchedWrite;
 def WriteBarrier : SchedWrite;
 
 def MIVGPRRead  : SchedRead;
@@ -143,9 +142,8 @@ multiclass SICommonWriteRes {
   def : HWWriteRes<WriteLDS,     [HWLGKM],   5>; // Can be between 2 and 64
   def : HWWriteRes<WriteSALU,    [HWSALU],   1>;
   def : HWWriteRes<WriteSMEM,    [HWLGKM],   5>;
-  def : HWWriteRes<WriteVMEM,    [HWVMEM],   80>;
   let ResourceCycles = [80] in
-  def : HWWriteRes<ReadVMEM,     [HWVMEM],   80>;
+  def : HWWriteRes<WriteVMEM,    [HWVMEM],   80>;
   def : HWWriteRes<WriteBarrier, [HWBranch], 500>; // XXX: Guessed ???
 
   def : HWVALUWriteRes<Write32Bit,         1>;
@@ -214,8 +212,6 @@ def : InstRW<[Write64Bit, MIReadVGPR], (instregex "^V_ACCVGPR_WRITE_B32_e64$")>;
 def : InstRW<[Write2PassMAI,  MIMFMARead], (instregex "^V_MFMA_..._4X4X")>;
 def : InstRW<[Write8PassMAI,  MIMFMARead], (instregex "^V_MFMA_..._16X16X")>;
 def : InstRW<[Write16PassMAI, MIMFMARead], (instregex "^V_MFMA_..._32X32X")>;
-
-def : InstRW<[ReadVMEM], (instregex "^BUFFER_LOAD")>;
 
 }  // End SchedModel = SIQuarterSpeedModel
 
