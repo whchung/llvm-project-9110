@@ -96,7 +96,7 @@ def HWExport : ProcResource<1> {
   let BufferSize = 7; // Taken from S_WAITCNT
 }
 def HWLGKM   : ProcResource<1> {
-  let BufferSize = 31;  // Taken from S_WAITCNT
+  let BufferSize = 0;  // Taken from S_WAITCNT
 }
 def HWSALU   : ProcResource<1> {
   let BufferSize = 1;
@@ -139,6 +139,7 @@ multiclass SICommonWriteRes {
 
   def : HWWriteRes<WriteBranch,  [HWBranch], 8>;
   def : HWWriteRes<WriteExport,  [HWExport], 4>;
+  let ResourceCycles = [5] in
   def : HWWriteRes<WriteLDS,     [HWLGKM],   5>; // Can be between 2 and 64
   def : HWWriteRes<WriteSALU,    [HWSALU],   1>;
   def : HWWriteRes<WriteSMEM,    [HWLGKM],   5>;
