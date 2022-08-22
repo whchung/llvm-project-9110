@@ -892,6 +892,10 @@ RocmInstallationDetector::getCommonBitcodeLibs(
   AddBCLib(getCorrectlyRoundedSqrtPath(CorrectSqrt));
   AddBCLib(getWavefrontSize64Path(Wave64));
   AddBCLib(LibDeviceFile);
+  const StringRef oclc_abi_bitcode = "/opt/rocm/amdgcn/bitcode/oclc_abi_version_400.bc";
+  if (llvm::sys::fs::exists(oclc_abi_bitcode)) {
+    AddBCLib(oclc_abi_bitcode);
+  }
 
   return BCLibs;
 }
